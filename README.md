@@ -1,5 +1,5 @@
 
-# Calm Copa
+# Calm Copa (NAO TO NAO)
 
 Aplicativo Flutter para simulação e acompanhamento de partidas de uma copa (protótipo educacional / acadêmico).
 
