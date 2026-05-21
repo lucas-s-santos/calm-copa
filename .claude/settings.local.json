@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\lucas\\\\OneDrive\\\\Área de Trabalho\\\\FACULDADE\\\\DesenvolvimentoMobile\\\\aula2005\\\\atv4\\\\atv4\" -Recurse)",
+      "Bash(Select-Object FullName)",
+      "Bash(ConvertTo-Csv -NoTypeInformation)",
+      "Bash(Write-Output)",
+      "PowerShell(Get-ChildItem -Path \"c:\\\\Users\\\\lucas\\\\OneDrive\\\\Área de Trabalho\\\\FACULDADE\\\\DesenvolvimentoMobile\\\\aula2005\\\\atv4\\\\atv4\" -Recurse | Select-Object FullName | ForEach-Object { $_.FullName })",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(ls -la /tmp/worldcup.json/ | grep -E \"^d\" | head -30)",
+      "Read(//tmp/**)",
+      "Bash(flutter pub *)",
+      "Bash(flutter analyze *)"
+    ]
+  }
+}
