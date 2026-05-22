@@ -94,6 +94,20 @@ class Copa2026Provider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Stadium? getStadium(String groundName) {
+    try {
+      return _stadiums.firstWhere(
+        (s) =>
+            groundName == s.city ||
+            groundName.contains(s.city) ||
+            s.city.contains(groundName) ||
+            groundName.contains(s.name),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
   List<Map<String, dynamic>> getGroupStandings(String groupName) {
     final groupMatches = _matches
         .where((m) => m.group == groupName && m.isGroupStage)

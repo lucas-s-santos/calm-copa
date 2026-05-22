@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../models/match.dart';
 import '../models/local_result.dart';
+import '../models/stadium.dart';
 import '../providers/copa_2026_provider.dart';
 import '../utils/team_flags.dart';
 import '../utils/team_names_pt.dart';
@@ -21,9 +22,11 @@ class MatchDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     LocalResult? localResult;
+    Stadium? stadium;
     if (show2026Actions) {
-      localResult =
-          context.watch<Copa2026Provider>().localResults[match.matchKey];
+      final prov = context.watch<Copa2026Provider>();
+      localResult = prov.localResults[match.matchKey];
+      stadium = prov.getStadium(match.ground);
     }
 
     final apiScore = match.score;
@@ -177,6 +180,33 @@ class MatchDetailScreen extends StatelessWidget {
                               color: Colors.white54, fontSize: 13)),
                     ],
                   ),
+                  if (stadium != null) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(stadium.countryFlag,
+                            style: const TextStyle(fontSize: 12)),
+                        const SizedBox(width: 4),
+                        Text(
+                          stadium.name,
+                          style: const TextStyle(
+                              color: Colors.white38, fontSize: 11),
+                        ),
+                        const Text('  •  ',
+                            style: TextStyle(
+                                color: Colors.white24, fontSize: 11)),
+                        const Icon(Icons.people,
+                            color: Colors.white38, size: 11),
+                        const SizedBox(width: 3),
+                        Text(
+                          _fmtCapacity(stadium.capacity),
+                          style: const TextStyle(
+                              color: Colors.white38, fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -234,6 +264,11 @@ class MatchDetailScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _fmtCapacity(int n) {
+    if (n >= 1000) return '${(n / 1000).round()}k';
+    return n.toString();
   }
 
   String _formatDate(String dateStr) {

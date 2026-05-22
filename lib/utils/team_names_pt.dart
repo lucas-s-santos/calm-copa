@@ -50,6 +50,8 @@ class TeamNamesPt {
     'Montenegro': 'Montenegro',
     'Kosovo': 'Kosovo',
     'Bosnia': 'Bósnia',
+    'Bosnia & Herzegovina': 'Bósnia',
+    'Bosnia and Herzegovina': 'Bósnia',
     'Bulgaria': 'Bulgária',
     'Estonia': 'Estônia',
     'Latvia': 'Letônia',
@@ -82,6 +84,19 @@ class TeamNamesPt {
     'Nicaragua': 'Nicarágua',
     'Dominican Republic': 'Rep. Dominicana',
 
+    // Seleções históricas (nomes desatualizados da API)
+    'West Germany': 'Alemanha Oc.',
+    'East Germany': 'Alemanha Or.',
+    'Soviet Union': 'União Soviética',
+    'Yugoslavia': 'Iugoslávia',
+    'Czechoslovakia': 'Tchecoslováquia',
+    'Zaire': 'Zaire',
+    'United Arab Emirates': 'Emirados Árabes',
+    "Côte d'Ivoire": 'Costa do Marfim',
+    'Serbia and Montenegro': 'Sérvia e Mont.',
+    'Bosnia-Herzegovina': 'Bósnia',
+    'Dutch East Indies': 'Índias Orient.',
+
     // CAF
     'Morocco': 'Marrocos',
     'Senegal': 'Senegal',
@@ -95,6 +110,7 @@ class TeamNamesPt {
     'Mali': 'Mali',
     'South Africa': 'África do Sul',
     'Congo DR': 'Rep. Congo',
+    'DR Congo': 'Rep. Congo',
     'Congo': 'Congo',
     'Burkina Faso': 'Burkina Faso',
     'Guinea': 'Guiné',
@@ -160,13 +176,32 @@ class TeamNamesPt {
   };
 
   static const Map<String, String> _rounds = {
+    'Matchday 1': 'Rodada 1',
+    'Matchday 2': 'Rodada 2',
+    'Matchday 3': 'Rodada 3',
     'Round of 32': 'Rodada de 32',
     'Round of 16': 'Oitavas de Final',
     'Quarter-final': 'Quartas de Final',
+    'Quarter-finals': 'Quartas de Final',
     'Semi-final': 'Semifinais',
+    'Semi-finals': 'Semifinais',
     'Match for third place': 'Disputa 3º Lugar',
+    'Third-place match': 'Disputa 3º Lugar',
+    'Third-place play-off': 'Disputa 3º Lugar',
+    'Play-off for third place': 'Disputa 3º Lugar',
     'Final': 'Final',
   };
+
+  static const Map<String, String> _continents = {
+    'North America': 'América do Norte',
+    'South America': 'América do Sul',
+    'Europe': 'Europa',
+    'Africa': 'África',
+    'Asia': 'Ásia',
+    'Oceania': 'Oceania',
+  };
+
+  static String continent(String c) => _continents[c] ?? c;
 
   static String translate(String name) => _names[name] ?? name;
 

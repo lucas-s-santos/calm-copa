@@ -135,9 +135,57 @@ class HistoryProvider extends ChangeNotifier {
     return list.take(10).toList();
   }
 
-  // Carrega copas ricas em dados para estatísticas (com artilheiros)
+  // Carrega todas as copas disponíveis para estatísticas completas
   Future<void> loadStatsYears() async {
-    final richYears = [2014, 2018, 2022, 2006, 2010, 2002, 1998, 1994, 1990, 1986];
-    await Future.wait(richYears.map(loadYear));
+    await Future.wait(WorldCupApiService.historicalYears.map(loadYear));
+  }
+
+  // Top 5 jogos com mais gols
+  List<Map<String, dynamic>> get highestScoringMatches {
+    final all = <Map<String, dynamic>>[];
+    for (final entry in _matchCache.entries) {
+      for (final m in entry.value) {
+        if (m.score?.hasResult == true) {
+          final total = m.score!.ft[0] + m.score!.ft[1];
+          all.add({'year': entry.key, 'match': m, 'total': total});
+        }
+      }
+    }
+    all.sort((a, b) => (b['total'] as int).compareTo(a['total'] as int));
+    return all.take(5).toList();
+  }
+
+  // Participações por país (quantas copas cada seleção jogou)
+  Map<String, int> get participationsByCountry {
+    final Map<String, Set<int>> teams = {};
+    for (final entry in _matchCache.entries) {
+      for (final m in entry.value) {
+        teams.putIfAbsent(m.team1, () => {}).add(entry.key);
+        teams.putIfAbsent(m.team2, () => {}).add(entry.key);
+      }
+    }
+    final sorted = teams.entries.toList()
+      ..sort((a, b) => b.value.length.compareTo(a.value.length));
+    return Map.fromEntries(
+        sorted.take(15).map((e) => MapEntry(e.key, e.value.length)));
+  }
+
+  // Total de gols e partidas carregadas
+  Map<String, int> get globalStats {
+    int totalGoals = 0;
+    int totalMatches = 0;
+    for (final matches in _matchCache.values) {
+      for (final m in matches) {
+        if (m.score?.hasResult == true) {
+          totalGoals += m.score!.ft[0] + m.score!.ft[1];
+          totalMatches++;
+        }
+      }
+    }
+    return {
+      'goals': totalGoals,
+      'matches': totalMatches,
+      'editions': _matchCache.length,
+    };
   }
 }

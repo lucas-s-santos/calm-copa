@@ -82,12 +82,12 @@ class MatchCard extends StatelessWidget {
                 children: [
                   if (showGroup && match.group != null)
                     _Badge(
-                      label: match.group!,
+                      label: TeamNamesPt.group(match.group!),
                       color: const Color(0xFFFFD700).withValues(alpha: 0.15),
                       textColor: const Color(0xFFFFD700),
                     )
                   else
-                    Text(match.round,
+                    Text(TeamNamesPt.round(match.round),
                         style: const TextStyle(
                             color: Colors.white38, fontSize: 11)),
                   const Spacer(),

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/copa_2026_provider.dart';
 import '../models/match.dart';
+import '../models/stadium.dart';
 import '../utils/team_flags.dart';
 import '../utils/team_names_pt.dart';
 import '../widgets/match_card.dart';
@@ -23,7 +24,7 @@ class _Copa2026ScreenState extends State<Copa2026Screen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<Copa2026Provider>().load();
     });
@@ -85,6 +86,7 @@ class _Copa2026ScreenState extends State<Copa2026Screen>
             Tab(text: 'Agenda'),
             Tab(text: 'Grupos'),
             Tab(text: 'Seleções'),
+            Tab(text: 'Estádios'),
           ],
         ),
       ),
@@ -132,6 +134,7 @@ class _Copa2026ScreenState extends State<Copa2026Screen>
               _ScheduleTab(provider: provider),
               _GroupsTab(provider: provider),
               _TeamsTab(provider: provider),
+              _StadiumsTab(provider: provider),
             ],
           );
         },
@@ -377,8 +380,10 @@ class _GroupsTab extends StatelessWidget {
                     _CellH('V'),
                     _CellH('E'),
                     _CellH('D'),
-                    _CellH('SG', width: 34),
-                    _CellH('PTS', width: 34),
+                    _CellH('GP', width: 24),
+                    _CellH('GC', width: 24),
+                    _CellH('SG', width: 28),
+                    _CellH('PTS', width: 30),
                   ],
                 ),
               ),
@@ -439,9 +444,11 @@ class _GroupsTab extends StatelessWidget {
                       _CellD('${s['v']}'),
                       _CellD('${s['e']}'),
                       _CellD('${s['d']}'),
-                      _CellD('${s['sg']}', width: 34),
+                      _CellD('${s['gp']}', width: 24),
+                      _CellD('${s['gc']}', width: 24),
+                      _CellD('${s['sg']}', width: 28),
                       _CellD('${s['pts']}',
-                          width: 34,
+                          width: 30,
                           bold: true,
                           color: qualified
                               ? const Color(0xFFFFD700)
@@ -455,6 +462,204 @@ class _GroupsTab extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+// ── Tab: Estádios ─────────────────────────────────────────────────────────────
+
+class _StadiumsTab extends StatelessWidget {
+  final Copa2026Provider provider;
+  const _StadiumsTab({required this.provider});
+
+  static const _countryOrder = ['mx', 'us', 'ca'];
+  static const _countryNames = {
+    'us': 'Estados Unidos',
+    'mx': 'México',
+    'ca': 'Canadá',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final byCountry = <String, List<Stadium>>{};
+    for (final s in provider.stadiums) {
+      byCountry.putIfAbsent(s.cc ?? 'us', () => []).add(s);
+    }
+
+    if (byCountry.isEmpty) {
+      return const Center(
+        child: Text('Carregando estádios...',
+            style: TextStyle(color: Colors.white54)),
+      );
+    }
+
+    return ListView(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      children: _countryOrder
+          .where((cc) => byCountry.containsKey(cc))
+          .map((cc) => _CountryStadiums(
+                cc: cc,
+                name: _countryNames[cc] ?? cc.toUpperCase(),
+                stadiums: byCountry[cc]!,
+              ))
+          .toList(),
+    );
+  }
+}
+
+class _CountryStadiums extends StatelessWidget {
+  final String cc;
+  final String name;
+  final List<Stadium> stadiums;
+  const _CountryStadiums(
+      {required this.cc, required this.name, required this.stadiums});
+
+  @override
+  Widget build(BuildContext context) {
+    final totalCapacity = stadiums.fold(0, (sum, s) => sum + s.capacity);
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF131F13),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: const BoxDecoration(
+              color: Color(0xFF1A3A1A),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(13)),
+            ),
+            child: Row(
+              children: [
+                Text(
+                  cc == 'us'
+                      ? '🇺🇸'
+                      : cc == 'mx'
+                          ? '🇲🇽'
+                          : '🇨🇦',
+                  style: const TextStyle(fontSize: 18),
+                ),
+                const SizedBox(width: 8),
+                Text(name,
+                    style: const TextStyle(
+                        color: Color(0xFFFFD700),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13)),
+                const Spacer(),
+                Text(
+                  '${stadiums.length} estádio${stadiums.length > 1 ? 's' : ''}',
+                  style: const TextStyle(color: Colors.white38, fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            child: Row(
+              children: [
+                const Icon(Icons.people_outline,
+                    color: Colors.white38, size: 14),
+                const SizedBox(width: 4),
+                Text(
+                  'Capacidade total: ${_fmt(totalCapacity)}',
+                  style: const TextStyle(color: Colors.white38, fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+          const Divider(color: Colors.white12, height: 1),
+          ...stadiums.asMap().entries.map((entry) {
+            final i = entry.key;
+            final s = entry.value;
+            final isLast = i == stadiums.length - 1;
+            return Container(
+              decoration: BoxDecoration(
+                border: i > 0
+                    ? const Border(top: BorderSide(color: Colors.white12))
+                    : null,
+                borderRadius: isLast
+                    ? const BorderRadius.vertical(bottom: Radius.circular(13))
+                    : null,
+              ),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1A472A).withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Center(
+                      child: Text('🏟️', style: TextStyle(fontSize: 20)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          s.name,
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          s.city,
+                          style: const TextStyle(
+                              color: Colors.white54, fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.people,
+                              color: Color(0xFFFFD700), size: 12),
+                          const SizedBox(width: 3),
+                          Text(
+                            _fmt(s.capacity),
+                            style: const TextStyle(
+                                color: Color(0xFFFFD700),
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        s.timezone,
+                        style: const TextStyle(
+                            color: Colors.white38, fontSize: 10),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  String _fmt(int n) {
+    if (n >= 1000) {
+      final k = n / 1000;
+      return '${k == k.truncateToDouble() ? k.toInt() : k.toStringAsFixed(0)}k';
+    }
+    return n.toString();
   }
 }
 
@@ -590,7 +795,7 @@ class _TeamsTab extends StatelessWidget {
                         style: const TextStyle(
                             color: Colors.white, fontSize: 14)),
                     subtitle: Text(
-                      'Grupo ${t.group}  •  ${t.fifaCode}',
+                      '${TeamNamesPt.continent(t.continent)}  •  Grupo ${t.group}  •  ${t.fifaCode}',
                       style: const TextStyle(
                           color: Colors.white38, fontSize: 11),
                     ),
