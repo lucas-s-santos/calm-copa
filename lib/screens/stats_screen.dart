@@ -27,7 +27,6 @@ class _StatsScreenState extends State<StatsScreen> {
     final provider = context.watch<HistoryProvider>();
     final titles = provider.titlesByCountry;
     final goalsByYear = provider.goalsByYear;
-    final topScorers = provider.allTimeTopScorers;
 
     final sortedTitles = titles.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
@@ -161,71 +160,6 @@ class _StatsScreenState extends State<StatsScreen> {
                   const SizedBox(height: 24),
                 ],
 
-                // ── Artilheiros Históricos ────────────────────────────────
-                if (topScorers.isNotEmpty) ...[
-                  _SectionTitle(title: '👑 Artilheiros Históricos'),
-                  const SizedBox(height: 8),
-                  ...topScorers.asMap().entries.map((e) {
-                    final i = e.key;
-                    final s = e.value;
-                    final medal = i == 0
-                        ? '🥇'
-                        : i == 1
-                            ? '🥈'
-                            : i == 2
-                                ? '🥉'
-                                : '${i + 1}.';
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1E2D1E),
-                        borderRadius: BorderRadius.circular(10),
-                        border: i == 0
-                            ? Border.all(
-                                color: const Color(0xFFFFD700), width: 1.5)
-                            : null,
-                      ),
-                      child: Row(
-                        children: [
-                          Text(medal,
-                              style: const TextStyle(fontSize: 20)),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              s['name'] as String,
-                              style: const TextStyle(
-                                  color: Colors.white, fontSize: 14),
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFD700).withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              '${s['goals']} ⚽',
-                              style: const TextStyle(
-                                  color: Color(0xFFFFD700),
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-                ],
-
-                const SizedBox(height: 16),
-                const Text(
-                  '* Estatísticas baseadas em copas com dados de artilheiros disponíveis',
-                  style: TextStyle(color: Colors.white24, fontSize: 10),
-                  textAlign: TextAlign.center,
-                ),
                 const SizedBox(height: 16),
               ],
             ),
@@ -234,14 +168,14 @@ class _StatsScreenState extends State<StatsScreen> {
 
   String _countryFlag(String country) {
     const flags = {
-      'Brazil': '🇧🇷',
-      'Germany': '🇩🇪',
-      'Italy': '🇮🇹',
+      'Brasil': '🇧🇷',
+      'Alemanha': '🇩🇪',
+      'Itália': '🇮🇹',
       'Argentina': '🇦🇷',
-      'France': '🇫🇷',
-      'Uruguay': '🇺🇾',
-      'England': '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
-      'Spain': '🇪🇸',
+      'França': '🇫🇷',
+      'Uruguai': '🇺🇾',
+      'Inglaterra': '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
+      'Espanha': '🇪🇸',
     };
     return flags[country] ?? '🏆';
   }

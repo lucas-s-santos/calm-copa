@@ -32,8 +32,9 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (i) => setState(() => _currentIndex = i),
-        backgroundColor: const Color(0xFF0D1A0D),
-        indicatorColor: const Color(0xFFFFD700).withValues(alpha: 0.25),
+        backgroundColor: const Color(0xFF0A150A),
+        indicatorColor: const Color(0xFFFFD700).withValues(alpha: 0.2),
+        elevation: 8,
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.home_outlined),
@@ -69,12 +70,34 @@ class _DashboardTab extends StatefulWidget {
 }
 
 class _DashboardTabState extends State<_DashboardTab> {
+  late ScrollController _scroll;
+  bool _collapsed = false;
+
+  // A logo fica "colapsada" quando o scroll passa de ~80px
+  static const _collapseThreshold = 80.0;
+
   @override
   void initState() {
     super.initState();
+    _scroll = ScrollController();
+    _scroll.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<Copa2026Provider>().load();
     });
+  }
+
+  void _onScroll() {
+    final isCollapsed = _scroll.offset > _collapseThreshold;
+    if (isCollapsed != _collapsed) {
+      setState(() => _collapsed = isCollapsed);
+    }
+  }
+
+  @override
+  void dispose() {
+    _scroll.removeListener(_onScroll);
+    _scroll.dispose();
+    super.dispose();
   }
 
   @override
@@ -82,43 +105,41 @@ class _DashboardTabState extends State<_DashboardTab> {
     final provider = context.watch<Copa2026Provider>();
     final today = DateTime.now();
     final dateStr = DateFormat("EEEE, d 'de' MMMM", 'pt_BR').format(today);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth > 600;
 
     return Scaffold(
       backgroundColor: const Color(0xFF0D1A0D),
       body: CustomScrollView(
+        controller: _scroll,
         slivers: [
           SliverAppBar(
-            expandedHeight: 140,
+            expandedHeight: isTablet ? 200 : 170,
             floating: false,
             pinned: true,
             backgroundColor: const Color(0xFF0D1A0D),
             flexibleSpace: FlexibleSpaceBar(
-              title: const Text(
-                '🏆 Copa do Mundo',
-                style: TextStyle(
-                    color: Color(0xFFFFD700), fontWeight: FontWeight.bold),
+              centerTitle: true,
+              titlePadding: const EdgeInsets.only(bottom: 12),
+              // Título: logo pequena aparece APENAS quando colapsado
+              title: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                child: _collapsed
+                    ? _CollapsedTitle(key: const ValueKey('collapsed'))
+                    : const _ExpandedTitle(key: ValueKey('expanded')),
               ),
-              background: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Color(0xFF1A472A), Color(0xFF0D1A0D)],
-                  ),
-                ),
-              ),
+              background: _HeaderBackground(isTablet: isTablet),
             ),
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
               child: Text(
                 dateStr,
                 style: const TextStyle(color: Colors.white54, fontSize: 13),
               ),
             ),
           ),
-          // Jogos do dia
           SliverToBoxAdapter(
             child: _SectionTitle(
               icon: Icons.today,
@@ -131,19 +152,18 @@ class _DashboardTabState extends State<_DashboardTab> {
               child: Center(
                 child: Padding(
                   padding: EdgeInsets.all(32),
-                  child: CircularProgressIndicator(color: Color(0xFFFFD700)),
+                  child:
+                      CircularProgressIndicator(color: Color(0xFFFFD700)),
                 ),
               ),
             )
           else if (provider.error != null)
             SliverToBoxAdapter(
-              child: _ErrorCard(message: provider.error!),
-            )
+                child: _ErrorCard(message: provider.error!))
           else if (provider.todayMatches.isEmpty)
             SliverToBoxAdapter(
               child: _EmptyMatchesCard(
-                upcomingMatches: provider.nextDaysMatches,
-              ),
+                  upcomingMatches: provider.nextDaysMatches),
             )
           else
             SliverList(
@@ -155,7 +175,6 @@ class _DashboardTabState extends State<_DashboardTab> {
                 childCount: provider.todayMatches.length,
               ),
             ),
-          // Próximos jogos (quando não há hoje)
           if (!provider.loading &&
               provider.todayMatches.isEmpty &&
               provider.nextDaysMatches.isNotEmpty) ...[
@@ -176,7 +195,6 @@ class _DashboardTabState extends State<_DashboardTab> {
               ),
             ),
           ],
-          // Cards de navegação rápida
           SliverToBoxAdapter(
             child: _SectionTitle(
               icon: Icons.grid_view,
@@ -187,9 +205,9 @@ class _DashboardTabState extends State<_DashboardTab> {
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
             sliver: SliverGrid(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 1.6,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: isTablet ? 4 : 2,
+                childAspectRatio: isTablet ? 1.4 : 1.55,
                 mainAxisSpacing: 12,
                 crossAxisSpacing: 12,
               ),
@@ -198,31 +216,48 @@ class _DashboardTabState extends State<_DashboardTab> {
                   icon: Icons.sports_soccer,
                   title: 'Copa 2026',
                   subtitle: '80 jogos • 48 seleções',
-                  color: const Color(0xFF1A472A),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1A6B35), Color(0xFF0D3D1E)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                   onTap: () => _goToTab(context, 1),
                 ),
                 _NavCard(
                   icon: Icons.history,
                   title: 'História',
                   subtitle: '1930 – 2022',
-                  color: const Color(0xFF1A3A47),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1A3A5C), Color(0xFF0D1A2E)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                   onTap: () => _goToTab(context, 2),
                 ),
                 _NavCard(
                   icon: Icons.bar_chart,
                   title: 'Estatísticas',
                   subtitle: 'Gráficos e rankings',
-                  color: const Color(0xFF3A1A47),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF4A1A6B), Color(0xFF220D3D)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                   onTap: () => _goToTab(context, 3),
                 ),
                 _NavCard(
                   icon: Icons.quiz,
                   title: 'Quiz',
                   subtitle: 'Teste seu conhecimento',
-                  color: const Color(0xFF472A1A),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF6B3A1A), Color(0xFF3D1E0D)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                   onTap: () => Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const QuizScreen()),
+                    MaterialPageRoute(
+                        builder: (_) => const QuizScreen()),
                   ),
                 ),
               ]),
@@ -234,10 +269,99 @@ class _DashboardTabState extends State<_DashboardTab> {
   }
 
   void _goToTab(BuildContext context, int index) {
-    final homeState = context.findAncestorStateOfType<_HomeScreenState>();
+    final homeState =
+        context.findAncestorStateOfType<_HomeScreenState>();
     homeState?.setState(() => homeState._currentIndex = index);
   }
 }
+
+// ── Header components ─────────────────────────────────────────────────────────
+
+// Fundo do header expansível: mostra a logo grande centralizada
+class _HeaderBackground extends StatelessWidget {
+  final bool isTablet;
+  const _HeaderBackground({required this.isTablet});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFF1A472A), Color(0xFF0D1A0D)],
+            ),
+          ),
+        ),
+        // Logo grande centralizada (desaparece ao colapsar)
+        Positioned.fill(
+          child: Align(
+            alignment: const Alignment(0, -0.2),
+            child: Image.asset(
+              'logo2.png',
+              height: isTablet ? 110 : 90,
+              errorBuilder: (_, _, _) =>
+                  const Text('🏆', style: TextStyle(fontSize: 52)),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// Título quando expandido: apenas texto simples (logo está no background)
+class _ExpandedTitle extends StatelessWidget {
+  const _ExpandedTitle({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text(
+      'Calm Cup',
+      style: TextStyle(
+        color: Color(0xFFFFD700),
+        fontWeight: FontWeight.bold,
+        fontSize: 18,
+        letterSpacing: 0.5,
+      ),
+    );
+  }
+}
+
+// Título quando colapsado: logo pequena + texto
+class _CollapsedTitle extends StatelessWidget {
+  const _CollapsedTitle({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Image.asset(
+          'logo2.png',
+          height: 26,
+          errorBuilder: (_, _, _) =>
+              const Text('🏆', style: TextStyle(fontSize: 18)),
+        ),
+        const SizedBox(width: 8),
+        const Text(
+          'Calm Cup',
+          style: TextStyle(
+            color: Color(0xFFFFD700),
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Section Title ─────────────────────────────────────────────────────────────
 
 class _SectionTitle extends StatelessWidget {
   final IconData icon;
@@ -263,8 +387,8 @@ class _SectionTitle extends StatelessWidget {
           if (subtitle.isNotEmpty) ...[
             const SizedBox(width: 8),
             Text(subtitle,
-                style:
-                    const TextStyle(color: Colors.white38, fontSize: 12)),
+                style: const TextStyle(
+                    color: Colors.white38, fontSize: 12)),
           ],
         ],
       ),
@@ -272,18 +396,20 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
+// ── Nav Card ──────────────────────────────────────────────────────────────────
+
 class _NavCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
-  final Color color;
+  final Gradient gradient;
   final VoidCallback onTap;
 
   const _NavCard({
     required this.icon,
     required this.title,
     required this.subtitle,
-    required this.color,
+    required this.gradient,
     required this.onTap,
   });
 
@@ -293,25 +419,34 @@ class _NavCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white12),
+          gradient: gradient,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
         padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: const Color(0xFFFFD700), size: 22),
-            const SizedBox(height: 6),
+            Icon(icon, color: const Color(0xFFFFD700), size: 24),
+            const SizedBox(height: 8),
             Text(title,
                 style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: 13)),
+            const SizedBox(height: 2),
             Text(subtitle,
-                style:
-                    const TextStyle(color: Colors.white54, fontSize: 10)),
+                style: const TextStyle(color: Colors.white54, fontSize: 10),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis),
           ],
         ),
       ),
@@ -319,9 +454,10 @@ class _NavCard extends StatelessWidget {
   }
 }
 
+// ── Empty / Error cards ───────────────────────────────────────────────────────
+
 class _EmptyMatchesCard extends StatelessWidget {
   final List upcomingMatches;
-
   const _EmptyMatchesCard({required this.upcomingMatches});
 
   @override
@@ -334,7 +470,8 @@ class _EmptyMatchesCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: const Color(0xFF1E2D1E),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white12),
       ),
       child: Column(
         children: [
@@ -370,13 +507,13 @@ class _ErrorCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.red.withValues(alpha: 0.4)),
       ),
-      child: Row(
+      child: const Row(
         children: [
-          const Icon(Icons.error_outline, color: Colors.red),
-          const SizedBox(width: 12),
+          Icon(Icons.error_outline, color: Colors.red),
+          SizedBox(width: 12),
           Expanded(
             child: Text('Erro ao carregar dados.\nVerifique sua conexão.',
-                style: const TextStyle(color: Colors.white70)),
+                style: TextStyle(color: Colors.white70)),
           ),
         ],
       ),

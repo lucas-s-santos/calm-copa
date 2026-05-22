@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/history_provider.dart';
+import '../utils/team_names_pt.dart';
 import '../widgets/match_card.dart';
 import 'match_detail_screen.dart';
 
@@ -22,6 +23,11 @@ class _CopaDetailScreenState extends State<CopaDetailScreen> {
     });
   }
 
+  String _translateRound(String round) {
+    if (round.startsWith('Group')) return TeamNamesPt.group(round);
+    return TeamNamesPt.round(round);
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<HistoryProvider>();
@@ -37,53 +43,64 @@ class _CopaDetailScreenState extends State<CopaDetailScreen> {
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 180,
             pinned: true,
             backgroundColor: const Color(0xFF1A472A),
             iconTheme: const IconThemeData(color: Colors.white),
-            flexibleSpace: FlexibleSpaceBar(
-              title: Text(
-                'Copa ${widget.year}',
-                style: const TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.bold),
-              ),
-              background: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Color(0xFF1A472A), Color(0xFF0D2A1A)],
-                  ),
-                ),
-                child: info != null
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const SizedBox(height: 30),
-                            Text(info['flag']!,
-                                style: const TextStyle(fontSize: 48)),
-                            Text(
-                              info['champion']! == '?'
-                                  ? '🏆 A definir'
-                                  : '🏆 ${info['champion']}',
-                              style: const TextStyle(
-                                  color: Color(0xFFFFD700),
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                            Text(
-                              'Sede: ${info['host']}',
-                              style: const TextStyle(
-                                  color: Colors.white70, fontSize: 12),
-                            ),
-                          ],
-                        ),
-                      )
-                    : null,
-              ),
+            title: Text(
+              'Copa ${widget.year}',
+              style: const TextStyle(
+                  color: Colors.white, fontWeight: FontWeight.bold),
             ),
           ),
+          if (info != null)
+            SliverToBoxAdapter(
+              child: Container(
+                margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1A472A), Color(0xFF0D2A1A)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: const Color(0xFFFFD700).withValues(alpha: 0.4),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Text(info['flag']!,
+                        style: const TextStyle(fontSize: 48)),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            info['champion'] == '?'
+                                ? '🏆 A definir'
+                                : '🏆 ${info['champion']}',
+                            style: const TextStyle(
+                              color: Color(0xFFFFD700),
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Sede: ${info['host']}',
+                            style: const TextStyle(
+                                color: Colors.white70, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           if (isLoading)
             const SliverFillRemaining(
               child: Center(
@@ -102,8 +119,7 @@ class _CopaDetailScreenState extends State<CopaDetailScreen> {
                         style: TextStyle(color: Colors.white54)),
                     const SizedBox(height: 8),
                     ElevatedButton(
-                      onPressed: () =>
-                          provider.loadYear(widget.year),
+                      onPressed: () => provider.loadYear(widget.year),
                       style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFFFD700),
                           foregroundColor: Colors.black),
@@ -114,7 +130,6 @@ class _CopaDetailScreenState extends State<CopaDetailScreen> {
               ),
             )
           else ...[
-            // Artilheiros da copa
             if (provider.getTopScorers(widget.year).isNotEmpty) ...[
               _SliverSectionTitle(title: '⚽ Artilheiros'),
               SliverToBoxAdapter(
@@ -147,7 +162,8 @@ class _CopaDetailScreenState extends State<CopaDetailScreen> {
                                   color: Colors.white, fontSize: 13),
                             ),
                             const SizedBox(height: 4),
-                            Text('${s['goals']} gol${s['goals'] == 1 ? '' : 's'}',
+                            Text(
+                                '${s['goals']} gol${s['goals'] == 1 ? '' : 's'}',
                                 style: const TextStyle(
                                     color: Color(0xFFFFD700), fontSize: 12)),
                           ],
@@ -158,11 +174,11 @@ class _CopaDetailScreenState extends State<CopaDetailScreen> {
                 ),
               ),
             ],
-            // Partidas por fase
             ...rounds.map((round) {
               final roundMatches = grouped[round]!;
+              final roundLabel = _translateRound(round);
               return [
-                _SliverSectionTitle(title: round),
+                _SliverSectionTitle(title: roundLabel),
                 SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (ctx, i) => MatchCard(

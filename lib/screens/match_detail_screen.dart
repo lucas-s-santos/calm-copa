@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import '../models/match.dart';
 import '../models/local_result.dart';
 import '../providers/copa_2026_provider.dart';
+import '../utils/team_flags.dart';
+import '../utils/team_names_pt.dart';
 import '../widgets/score_entry_dialog.dart';
 
 class MatchDetailScreen extends StatelessWidget {
@@ -38,12 +40,15 @@ class MatchDetailScreen extends StatelessWidget {
     }
 
     final dateFormatted = _formatDate(match.date);
+    final roundLabel = match.round.startsWith('Group')
+        ? TeamNamesPt.group(match.round)
+        : TeamNamesPt.round(match.round);
 
     return Scaffold(
       backgroundColor: const Color(0xFF0D1A0D),
       appBar: AppBar(
         backgroundColor: const Color(0xFF1A472A),
-        title: Text(match.round,
+        title: Text(roundLabel,
             style: const TextStyle(color: Colors.white, fontSize: 16)),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
@@ -72,7 +77,7 @@ class MatchDetailScreen extends StatelessWidget {
                         color: const Color(0xFFFFD700).withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: Text(match.group!,
+                      child: Text(TeamNamesPt.group(match.group!),
                           style: const TextStyle(
                               color: Color(0xFFFFD700), fontSize: 13)),
                     ),
@@ -87,7 +92,8 @@ class MatchDetailScreen extends StatelessWidget {
                                 horizontal: 20, vertical: 10),
                             decoration: BoxDecoration(
                               color: (hasApiResult || hasLocalResult)
-                                  ? const Color(0xFFFFD700).withValues(alpha: 0.15)
+                                  ? const Color(0xFFFFD700)
+                                      .withValues(alpha: 0.15)
                                   : const Color(0xFF1E2D1E),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
@@ -196,7 +202,7 @@ class MatchDetailScreen extends StatelessWidget {
                 ),
               ),
 
-            // Artilheiros
+            // Gols
             if (match.goals1.isNotEmpty || match.goals2.isNotEmpty) ...[
               const _SectionDivider(title: 'Gols'),
               Row(
@@ -205,7 +211,8 @@ class MatchDetailScreen extends StatelessWidget {
                   Expanded(
                     child: Column(
                       children: match.goals1
-                          .map((g) => _GoalRow(goal: g, align: Alignment.centerRight))
+                          .map((g) => _GoalRow(
+                              goal: g, align: Alignment.centerRight))
                           .toList(),
                     ),
                   ),
@@ -213,7 +220,8 @@ class MatchDetailScreen extends StatelessWidget {
                   Expanded(
                     child: Column(
                       children: match.goals2
-                          .map((g) => _GoalRow(goal: g, align: Alignment.centerLeft))
+                          .map((g) =>
+                              _GoalRow(goal: g, align: Alignment.centerLeft))
                           .toList(),
                     ),
                   ),
@@ -258,13 +266,28 @@ class _TeamColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final flag = TeamFlags.get(name);
+    final namePt = TeamNamesPt.translate(name);
+
     return SizedBox(
       width: 90,
-      child: Text(
-        name,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-            color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+      child: Column(
+        children: [
+          if (flag.isNotEmpty) ...[
+            Text(flag, style: const TextStyle(fontSize: 36)),
+            const SizedBox(height: 6),
+          ],
+          Text(
+            namePt,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.bold),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
   }

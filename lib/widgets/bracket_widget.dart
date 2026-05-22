@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../providers/simulator_provider.dart';
 import '../models/match.dart';
+import '../utils/team_flags.dart';
+import '../utils/team_names_pt.dart';
 
 class BracketWidget extends StatelessWidget {
   final SimulatorProvider provider;
@@ -9,11 +11,34 @@ class BracketWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!provider.allGroupsSimulated) {
-      return const Center(
-        child: Text(
-          'Simule os grupos para ver o bracket',
-          style: TextStyle(color: Colors.white54, fontSize: 14),
-          textAlign: TextAlign.center,
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1A472A).withValues(alpha: 0.3),
+                  shape: BoxShape.circle,
+                ),
+                child: const Center(
+                  child: Text('📊', style: TextStyle(fontSize: 32)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Simule os grupos para ver o bracket',
+                style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -38,56 +63,32 @@ class BracketWidget extends StatelessWidget {
     final fin = provider.final_;
     final third = provider.thirdPlace;
 
-    // Build columns per round
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _RoundColumn(
-          label: 'Round of 32',
-          matches: r32,
-          provider: provider,
-        ),
+        _RoundColumn(label: 'Rodada de 32', matches: r32, provider: provider),
         _ConnectorColumn(count: r32.length, nextCount: r16.length),
-        _RoundColumn(
-          label: 'Round of 16',
-          matches: r16,
-          provider: provider,
-        ),
+        _RoundColumn(label: 'Oitavas', matches: r16, provider: provider),
         _ConnectorColumn(count: r16.length, nextCount: qf.length),
-        _RoundColumn(
-          label: 'Quartas',
-          matches: qf,
-          provider: provider,
-        ),
+        _RoundColumn(label: 'Quartas', matches: qf, provider: provider),
         _ConnectorColumn(count: qf.length, nextCount: sf.length),
-        _RoundColumn(
-          label: 'Semifinais',
-          matches: sf,
-          provider: provider,
-        ),
+        _RoundColumn(label: 'Semifinais', matches: sf, provider: provider),
         _ConnectorColumn(count: sf.length, nextCount: fin.length),
         Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             if (fin.isNotEmpty) ...[
-              const _RoundLabel(label: 'Final'),
+              const _RoundLabel(label: 'Final', isFinal: true),
               _BracketMatchCard(
-                match: fin.first,
-                provider: provider,
-                highlight: true,
-              ),
+                  match: fin.first, provider: provider, highlight: true),
             ],
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             if (third.isNotEmpty) ...[
               const _RoundLabel(label: '3º Lugar'),
-              _BracketMatchCard(
-                match: third.first,
-                provider: provider,
-              ),
+              _BracketMatchCard(match: third.first, provider: provider),
             ],
-            // Champion display
             if (provider.projectedChampion != null) ...[
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
               _ChampionBadge(name: provider.projectedChampion!),
             ],
           ],
@@ -130,7 +131,8 @@ class _RoundColumn extends StatelessWidget {
 
 class _RoundLabel extends StatelessWidget {
   final String label;
-  const _RoundLabel({required this.label});
+  final bool isFinal;
+  const _RoundLabel({required this.label, this.isFinal = false});
 
   @override
   Widget build(BuildContext context) {
@@ -138,13 +140,19 @@ class _RoundLabel extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A472A),
+        color: isFinal
+            ? const Color(0xFFFFD700).withValues(alpha: 0.15)
+            : const Color(0xFF1A472A),
         borderRadius: BorderRadius.circular(6),
+        border: isFinal
+            ? Border.all(
+                color: const Color(0xFFFFD700).withValues(alpha: 0.5))
+            : null,
       ),
       child: Text(
         label,
-        style: const TextStyle(
-            color: Color(0xFFFFD700),
+        style: TextStyle(
+            color: isFinal ? const Color(0xFFFFD700) : const Color(0xFFFFD700),
             fontSize: 11,
             fontWeight: FontWeight.bold),
       ),
@@ -167,12 +175,17 @@ class _BracketMatchCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t1 = provider.resolveCode(match.team1);
-    final t2 = provider.resolveCode(match.team2);
+    final t1raw = provider.resolveCode(match.team1);
+    final t2raw = provider.resolveCode(match.team2);
     final result = provider.getResult(match.matchKey);
 
-    final tbd1 = t1 == match.team1 && match.team1.length > 2;
-    final tbd2 = t2 == match.team2 && match.team2.length > 2;
+    final tbd1 = t1raw == match.team1 && match.team1.length > 2;
+    final tbd2 = t2raw == match.team2 && match.team2.length > 2;
+
+    final t1 = tbd1 ? '?' : TeamNamesPt.translate(t1raw);
+    final t2 = tbd2 ? '?' : TeamNamesPt.translate(t2raw);
+    final f1 = tbd1 ? '' : TeamFlags.get(t1raw);
+    final f2 = tbd2 ? '' : TeamFlags.get(t2raw);
 
     String? winner;
     if (result != null) {
@@ -180,13 +193,13 @@ class _BracketMatchCard extends StatelessWidget {
     }
 
     return Container(
-      width: 160,
+      width: 170,
       margin: const EdgeInsets.only(bottom: 4),
       decoration: BoxDecoration(
         color: highlight
-            ? const Color(0xFF1A472A)
-            : const Color(0xFF1E2D1E),
-        borderRadius: BorderRadius.circular(8),
+            ? const Color(0xFF1E1A00)
+            : const Color(0xFF1A2A1A),
+        borderRadius: BorderRadius.circular(9),
         border: Border.all(
           color: highlight
               ? const Color(0xFFFFD700)
@@ -199,18 +212,17 @@ class _BracketMatchCard extends StatelessWidget {
       child: Column(
         children: [
           _TeamRow(
-            name: tbd1 ? '?' : t1,
+            name: t1,
+            flag: f1,
             score: result?[0],
-            isWinner: winner != null && winner == t1,
+            isWinner: winner == t1 && winner != null,
           ),
-          Divider(
-            height: 1,
-            color: result != null ? Colors.white12 : Colors.white12,
-          ),
+          Divider(height: 1, color: Colors.white12),
           _TeamRow(
-            name: tbd2 ? '?' : t2,
+            name: t2,
+            flag: f2,
             score: result?[1],
-            isWinner: winner != null && winner == t2,
+            isWinner: winner == t2 && winner != null,
           ),
         ],
       ),
@@ -220,11 +232,13 @@ class _BracketMatchCard extends StatelessWidget {
 
 class _TeamRow extends StatelessWidget {
   final String name;
+  final String flag;
   final int? score;
   final bool isWinner;
 
   const _TeamRow({
     required this.name,
+    this.flag = '',
     this.score,
     this.isWinner = false,
   });
@@ -232,12 +246,16 @@ class _TeamRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
       color: isWinner
-          ? const Color(0xFFFFD700).withValues(alpha: 0.1)
+          ? const Color(0xFFFFD700).withValues(alpha: 0.08)
           : null,
       child: Row(
         children: [
+          if (flag.isNotEmpty) ...[
+            Text(flag, style: const TextStyle(fontSize: 13)),
+            const SizedBox(width: 4),
+          ],
           Expanded(
             child: Text(
               name,
@@ -245,14 +263,13 @@ class _TeamRow extends StatelessWidget {
               style: TextStyle(
                 color: isWinner ? const Color(0xFFFFD700) : Colors.white70,
                 fontSize: 11,
-                fontWeight:
-                    isWinner ? FontWeight.bold : FontWeight.normal,
+                fontWeight: isWinner ? FontWeight.bold : FontWeight.normal,
               ),
             ),
           ),
           if (score != null)
             Container(
-              width: 22,
+              width: 20,
               alignment: Alignment.center,
               child: Text(
                 '$score',
@@ -281,9 +298,9 @@ class _ConnectorColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const cardH = 44.0; // approx height of each bracket card
+    const cardH = 46.0;
     const gap = 4.0;
-    const roundLabelH = 28.0;
+    const roundLabelH = 30.0;
 
     return SizedBox(
       width: 20,
@@ -308,26 +325,21 @@ class _ConnectorPainter extends CustomPainter {
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
 
-    const roundLabelH = 28.0;
-    const cardH = 44.0;
+    const roundLabelH = 30.0;
+    const cardH = 46.0;
     const gap = 4.0;
 
     final pairs = count ~/ 2;
     for (int i = 0; i < pairs; i++) {
       final topIdx = i * 2;
       final botIdx = topIdx + 1;
-
       final topY = roundLabelH + topIdx * (cardH + gap) + cardH / 2;
       final botY = roundLabelH + botIdx * (cardH + gap) + cardH / 2;
       final midY = (topY + botY) / 2;
 
-      // Horizontal line right from top card
       canvas.drawLine(Offset(0, topY), Offset(10, topY), paint);
-      // Horizontal line right from bottom card
       canvas.drawLine(Offset(0, botY), Offset(10, botY), paint);
-      // Vertical connecting line
       canvas.drawLine(Offset(10, topY), Offset(10, botY), paint);
-      // Horizontal line to next round
       canvas.drawLine(Offset(10, midY), Offset(20, midY), paint);
     }
   }
@@ -345,38 +357,50 @@ class _ChampionBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final namePt = TeamNamesPt.translate(name);
+    final flag = TeamFlags.get(name);
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF1A472A), Color(0xFF2A6A3A)],
+          colors: [Color(0xFF2A1A00), Color(0xFF1A3A0A)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFFFD700), width: 2),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFFFD700).withValues(alpha: 0.3),
-            blurRadius: 12,
+            color: const Color(0xFFFFD700).withValues(alpha: 0.25),
+            blurRadius: 16,
             spreadRadius: 2,
           ),
         ],
       ),
       child: Column(
         children: [
-          const Text('🏆', style: TextStyle(fontSize: 32)),
+          const Text('🏆', style: TextStyle(fontSize: 34)),
           const SizedBox(height: 4),
-          const Text('CAMPEÃO',
-              style: TextStyle(
-                  color: Color(0xFFFFD700),
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 2)),
+          const Text(
+            'CAMPEÃO',
+            style: TextStyle(
+                color: Color(0xFFFFD700),
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 2.5),
+          ),
+          const SizedBox(height: 6),
+          if (flag.isNotEmpty)
+            Text(flag, style: const TextStyle(fontSize: 26)),
           const SizedBox(height: 4),
-          Text(name,
-              style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold)),
+          Text(
+            namePt,
+            style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold),
+          ),
         ],
       ),
     );
