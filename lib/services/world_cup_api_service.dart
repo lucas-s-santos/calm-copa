@@ -19,7 +19,7 @@ class WorldCupApiService {
     final url = Uri.parse('$_base/$year/worldcup.json');
     final response = await http.get(url);
     if (response.statusCode == 404) {
-      throw Exception('NOT_FOUND');
+      throw Exception('NOT_FOUND');  // sem dados na API para este ano
     }
     if (response.statusCode != 200) {
       throw Exception('Erro ao carregar Copa $year');

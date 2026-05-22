@@ -110,7 +110,7 @@ class _CopaDetailScreenState extends State<CopaDetailScreen> {
           else if (error != null)
             SliverFillRemaining(
               child: Center(
-                child: error.contains('NOT_FOUND')
+                child: error.contains('NOT_FOUND') // 404 da API
                     ? const Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [

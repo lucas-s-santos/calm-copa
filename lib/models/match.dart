@@ -37,7 +37,7 @@ class Match {
     return Match(
       round: json['round'] as String,
       date: json['date'] as String,
-      time: json['time'] as String,
+      time: (json['time'] as String?) ?? '',
       team1: json['team1'] as String,
       team2: json['team2'] as String,
       group: json['group'] as String?,
