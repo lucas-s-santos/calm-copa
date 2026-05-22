@@ -42,6 +42,7 @@ class HistoryProvider extends ChangeNotifier {
 
   Future<void> loadYear(int year) async {
     if (_matchCache.containsKey(year)) return;
+    if (_errorMap[year]?.contains('NOT_FOUND') == true) return;
     _loadingMap[year] = true;
     _errorMap[year] = null;
     notifyListeners();

@@ -18,6 +18,9 @@ class WorldCupApiService {
   Future<List<Match>> fetchMatches(int year) async {
     final url = Uri.parse('$_base/$year/worldcup.json');
     final response = await http.get(url);
+    if (response.statusCode == 404) {
+      throw Exception('NOT_FOUND');
+    }
     if (response.statusCode != 200) {
       throw Exception('Erro ao carregar Copa $year');
     }

@@ -110,23 +110,47 @@ class _CopaDetailScreenState extends State<CopaDetailScreen> {
           else if (error != null)
             SliverFillRemaining(
               child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.wifi_off, color: Colors.white38, size: 48),
-                    const SizedBox(height: 12),
-                    const Text('Erro ao carregar',
-                        style: TextStyle(color: Colors.white54)),
-                    const SizedBox(height: 8),
-                    ElevatedButton(
-                      onPressed: () => provider.loadYear(widget.year),
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFFFD700),
-                          foregroundColor: Colors.black),
-                      child: const Text('Tentar novamente'),
-                    ),
-                  ],
-                ),
+                child: error.contains('NOT_FOUND')
+                    ? const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text('📭',
+                              style: TextStyle(fontSize: 48)),
+                          SizedBox(height: 12),
+                          Text(
+                            'Dados não disponíveis',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold),
+                          ),
+                          SizedBox(height: 6),
+                          Text(
+                            'A API não possui histórico\ndesta edição da Copa.',
+                            style: TextStyle(
+                                color: Colors.white54, fontSize: 13),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      )
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.wifi_off,
+                              color: Colors.white38, size: 48),
+                          const SizedBox(height: 12),
+                          const Text('Erro ao carregar',
+                              style: TextStyle(color: Colors.white54)),
+                          const SizedBox(height: 8),
+                          ElevatedButton(
+                            onPressed: () => provider.loadYear(widget.year),
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFFFD700),
+                                foregroundColor: Colors.black),
+                            child: const Text('Tentar novamente'),
+                          ),
+                        ],
+                      ),
               ),
             )
           else ...[
